@@ -15,6 +15,11 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
     // guardar una referencia al sonido de salto
     this.jumpSound = jumpSound;
+
+    //VIDA
+
+    this.health = 3;
+    this.inKnockback = false;
     
     //DISPARO
     this.shootKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
@@ -60,6 +65,8 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
   }
 
   update() {
+
+    if(this.inKnockback == true) return;
 
     //velocidad y fuerza de salto
     const speed = 200;        
@@ -108,5 +115,34 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     bullet.setCollideWorldBounds(true);
     bullet.body.onWorldBounds = true;
 
+  }
+
+  takeDamage(enemyXPosition){
+    this.health--; // Restamos uno de vida
+
+    if (this.health <= 0) {
+        this.scene.lose(); // Si se queda sin vidas, muere
+        return;
+    }
+
+    // Activamos el estado de impacto
+    this.inKnockback = true;
+
+    // CALCULAR DIRECCIÓN DEL IMPULSO:
+    // Si la X del jugador es menor que la del enemigo, el enemigo está a la derecha -> impulso a la izquierda (-1)
+    // Si no, el enemigo está a la izquierda -> impulso a la derecha (1)
+    const impulseDirection = this.x < enemyXPosition ? -1 : 1;
+
+    // Aplicamos las velocidades del golpe
+    this.setVelocityX(impulseDirection * 300); // Fuerza horizontal hacia atrás
+    this.setVelocityY(-250);                  // Un pequeño saltito hacia arriba (queda muy arcade)
+
+    this.setTint(0xff0000); // Pintamos al personaje de rojo para que se note el daño
+
+    // TEMPORIZADOR: A los 200 milisegundos, le devolvemos el control al jugador
+    this.scene.time.delayedCall(200, () => {
+        this.inKnockback = false;
+        this.clearTint(); // Quitamos el color rojo
+    });
   }
 }

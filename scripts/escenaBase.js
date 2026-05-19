@@ -1,6 +1,7 @@
 // Importar la clase del jugador desde el archivo externo
 import Jugador from './jugador.js';
 import Enemy from './enemy.js';
+import EnemyPatrol from './enemyPatrol.js';
 
 export default class EscenaBase extends Phaser.Scene {
   constructor() {
@@ -20,6 +21,7 @@ export default class EscenaBase extends Phaser.Scene {
     this.load.audio('defeat', 'assets/defeat.mp3'); // sonido de derrota
     this.load.image('bullet', 'assets/bullet.png'); //Sprite de la bala
     this.load.image('enemy', 'assets/enemy.png'); //Sprite del enemigo
+    this.load.image('enemy_patrol', 'assets/enemy.png'); //Sprite del enemigo que se mueve horizontalmente
 
 
     // Cargar atlas para el jugador (nueva línea añadida)
@@ -156,29 +158,49 @@ export default class EscenaBase extends Phaser.Scene {
 
     //ENEMIGOS ESTATICOS
 
-    this.enemies = this.physics.add.staticGroup({
+    this.staticEnemies = this.physics.add.staticGroup({
         runChildUpdate: true // esto hace que se ejecute el update() de cada enemigo de forma independiente
     });
 
-    // Buscar la capa de objetos 'enemies' creada en Tiled
-    const enemyLayer = map.objects.find(layer => layer.name === 'enemies');
+    // Buscar la capa de objetos 'enemies_static' creada en Tiled
+    const enemyLayer = map.objects.find(layer => layer.name === 'enemies_static');
 
     if (enemyLayer && enemyLayer.objects) {
 
         enemyLayer.objects.forEach(obj => {
           // Creamos el enemigo usando la posición de Tiled
           const enemy = new Enemy(this, obj.x, obj.y);
-          this.enemies.add(enemy);
+          this.staticEnemies.add(enemy);
           enemy.refreshBody();
         });
-
-
     }
 
     // Colisión entre el jugador y los enemigos (opcional: el jugador recibe daño)
-    this.physics.add.overlap(this.player, this.enemies, this.playerEnemyCollision, null, this);
+    this.physics.add.overlap(this.player, this.staticEnemies, this.playerEnemyCollision, null, this);
     // Colisión: Bala contra Enemigo
-    this.physics.add.overlap(this.player.bullets, this.enemies, this.enemyTakeDamage, null, this);
+    this.physics.add.overlap(this.player.bullets, this.staticEnemies, this.enemyTakeDamage, null, this);
+
+    //ENEMIGOS QUE PATRULLAN HORIZONTALMENTE
+
+    // 1. Crear el grupo DINÁMICO para los enemigos que se mueven
+    this.patrolEnemies = this.physics.add.group({ runChildUpdate: true });
+
+    // 2. Leerlos desde Tiled e instanciarlos
+    const patrolLayer = map.objects.find(layer => layer.name === 'enemies_patrol');
+    if (patrolLayer && patrolLayer.objects) {
+      patrolLayer.objects.forEach(obj => {
+        const goomba = new EnemyPatrol(this, obj.x, obj.y);
+        this.patrolEnemies.add(goomba);
+      });
+    }
+
+    // 3. LAS COLISIONES (¡Súper importante!)
+    // A diferencia de los estáticos, estos necesitan chocar contra el suelo para no caer al vacío
+    this.physics.add.collider(this.patrolEnemies, platforms);
+
+    // Reutilizamos las mismas funciones de daño y colisión que ya tenías programadas
+    this.physics.add.overlap(this.player, this.patrolEnemies, this.playerEnemyCollision, null, this);
+    this.physics.add.overlap(this.player.bullets, this.patrolEnemies, this.enemyTakeDamage, null, this);
 
   }
 
@@ -241,13 +263,8 @@ enemyTakeDamage(bullet, enemy) {
 }
 
 // Acción si el jugador choca directamente con el enemigo sin dispararle
-playerEnemyCollision(jugador, enemigo) {
-    // Llamamos al método de daño que planeamos para el jugador
-    if (typeof jugador.recibirDaño === 'function') {
-        jugador.recibirDaño();
-    } else {
-        // Fallback por si aún no has programar el daño: reinicia o pierde
-        this.lose();
-    }
+playerEnemyCollision(player, enemy) {
+
+    player.takeDamage(enemy.x);
 }
 }
