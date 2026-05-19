@@ -1,0 +1,112 @@
+// Definimos una clase Jugador que extiende de Sprite con físicas arcade
+export default class Jugador extends Phaser.Physics.Arcade.Sprite {
+  constructor(scene, x, y, jumpSound) {
+
+    super(scene, x, y, 'player');
+
+    this.scene = scene; // guardar una referencia a la escena
+
+    // añadir sprite y fisicas
+    this.scene.add.existing(this);
+    this.scene.physics.add.existing(this);
+
+    // guardar las teclas
+    this.cursors = this.scene.input.keyboard.createCursorKeys();
+
+    // guardar una referencia al sonido de salto
+    this.jumpSound = jumpSound;
+    
+    //DISPARO
+    this.shootKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    this.bullets = this.scene.physics.add.group({allowGravity:false});
+
+    // ANIMACIONES
+
+    //Ciclo de andar
+    this.walkAnim =  {}
+    this.walkAnim.key = 'char_walk';
+    this.walkAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+        prefix: 'char_walk',
+        start: 1,
+        end: 2,
+      });
+    this.walkAnim.frameRate = 10;
+    this.walkAnim.repeat = -1;
+    this.scene.anims.create(this.walkAnim);
+
+    //Idle
+    this.idleAnim = {}
+    this.idleAnim.key = 'char_idle';
+    this.idleAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+      prefix: 'char_idle',
+      start: 1,
+      end: 1,
+    });
+    this.idleAnim.frameRate = 10;
+    this.idleAnim.repeat = -1;
+    this.scene.anims.create(this.idleAnim);
+
+    //Salto
+    this.jumpAnim = {}
+    this.jumpAnim.key = 'char_jump';
+    this.jumpAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+      prefix: 'char_jump',
+      start: 1,
+      end: 1,
+    });
+    this.jumpAnim.frameRate = 10;
+    this.jumpAnim.repeat = -1;
+    this.scene.anims.create(this.jumpAnim);
+  }
+
+  update() {
+
+    //velocidad y fuerza de salto
+    const speed = 200;        
+    const jumpForce = 650;
+
+    // Cambiar orientación del sprite dependiendo del movimiento
+    if (this.body.velocity.x > 0) this.setFlipX(false);
+    else if (this.body.velocity.x < 0) this.setFlipX(true);
+
+    // movimiento con las fkechas
+    if (this.cursors.left.isDown) {
+      this.setVelocityX(-speed); // Izquierda     
+      if (this.body.onFloor()) this.play('char_walk', true); // Animación de andar
+    } else if (this.cursors.right.isDown) {
+      this.setVelocityX(speed); // Derecha
+      if (this.body.onFloor()) this.play('char_walk', true); // Animación de andar
+    } else {
+      this.setVelocityX(0); // Detener movimiento horizontal
+      if (this.body.onFloor()) this.play('char_idle', true); // Animación de Idle
+    }
+
+    // saltar solamente cuando esté en el suelo
+    if (this.cursors.space.isDown && this.body.onFloor()) {
+      this.setVelocityY(-jumpForce);
+      //Animacion y sonido de salto
+      this.play('char_jump', true);
+      this.jumpSound.play();
+    }
+
+    //DISPARO
+    if (Phaser.Input.Keyboard.JustDown(this.shootKey)) {
+        this.shoot();
+    }
+  }
+
+  shoot(){
+
+    let bullet = this.bullets.create(this.x, this.y, 'bullet');
+
+    if (this.flipX) {
+        bullet.setVelocityX(-400);
+    } else {
+        bullet.setVelocityX(400);
+    }
+
+    bullet.setCollideWorldBounds(true);
+    bullet.body.onWorldBounds = true;
+
+  }
+}
