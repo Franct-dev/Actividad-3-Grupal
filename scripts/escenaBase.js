@@ -2,6 +2,7 @@
 import Jugador from './jugador.js';
 import Enemy from './enemy.js';
 import EnemyPatrol from './enemyPatrol.js';
+import FlyingEnemy from './flyingEnemy.js';
 
 export default class EscenaBase extends Phaser.Scene {
   constructor() {
@@ -22,6 +23,7 @@ export default class EscenaBase extends Phaser.Scene {
     this.load.image('bullet', 'assets/bullet.png'); //Sprite de la bala
     this.load.image('enemy', 'assets/enemy.png'); //Sprite del enemigo
     this.load.image('enemy_patrol', 'assets/enemy.png'); //Sprite del enemigo que se mueve horizontalmente
+    this.load.image('enemy_flying', 'assets/enemy.png'); //Sprite del enemigo volador
 
 
     // Cargar atlas para el jugador (nueva línea añadida)
@@ -201,6 +203,26 @@ export default class EscenaBase extends Phaser.Scene {
     // Reutilizamos las mismas funciones de daño y colisión que ya tenías programadas
     this.physics.add.overlap(this.player, this.patrolEnemies, this.playerEnemyCollision, null, this);
     this.physics.add.overlap(this.player.bullets, this.patrolEnemies, this.enemyTakeDamage, null, this);
+
+    //ENEMIGOS CON MOVIMIENTO VERTICAL (VOLADORES)
+
+    // 2. En el create(), crear el grupo y leer de Tiled
+    this.flyingEnemies = this.physics.add.group({ runChildUpdate: true });
+
+    // const flyingLayer = map.objects.find(layer => layer.name === 'flying_enemies');
+    // if (flyingLayer && flyingLayer.objects) {
+    //     flyingLayer.objects.forEach(obj => {
+    //         const obstacle = new FlyingEnemy(this, obj.x, obj.y);
+    //         this.flyingEnemies.add(obstacle);
+    //     });
+    // }
+
+    const flyingEnemy = new FlyingEnemy(this, 200, 300);
+    this.flyingEnemies.add(flyingEnemy);
+
+    // 3. Colisiones (No necesita collider con plataformas porque flota)
+    this.physics.add.overlap(this.player, this.flyingEnemies, this.playerEnemyCollision, null, this);
+    this.physics.add.overlap(this.player.bullets, this.flyingEnemies, this.enemyTakeDamage, null, this);
 
   }
 
