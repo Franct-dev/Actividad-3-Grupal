@@ -13,8 +13,19 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     // guardar las teclas
     this.cursors = this.scene.input.keyboard.createCursorKeys();
 
+    this.teclas = scene.input.keyboard.addKeys({
+      dash: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+    });
+
     // guardar una referencia al sonido de salto
     this.jumpSound = jumpSound;
+
+    this.doubleJumpAvailable = true;
+    this.jumpFromFloorThisPress = false;
+    this.dashAvailable = true;
+    this.dashFramesTotal = 15;
+    this.dashFramesCounter = 15;
+    this.lastDirection = true; //True para left, false para right
 
     //VIDA
 
@@ -66,7 +77,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
   update() {
 
-    if(this.inKnockback == true) return;
+    if(this.inKnockback === true) return;
 
     //velocidad y fuerza de salto
     const speed = 200;        
@@ -78,9 +89,11 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
     // movimiento con las fkechas
     if (this.cursors.left.isDown) {
+      this.lastDirection = true;
       this.setVelocityX(-speed); // Izquierda     
       if (this.body.onFloor()) this.play('char_walk', true); // Animación de andar
     } else if (this.cursors.right.isDown) {
+      this.lastDirection = false;
       this.setVelocityX(speed); // Derecha
       if (this.body.onFloor()) this.play('char_walk', true); // Animación de andar
     } else {
@@ -90,10 +103,48 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
     // saltar solamente cuando esté en el suelo
     if (this.cursors.space.isDown && this.body.onFloor()) {
+      this.doubleJumpAvailable = true;
+      this.jumpFromFloorThisPress = true;
+
       this.setVelocityY(-jumpForce);
       //Animacion y sonido de salto
       this.play('char_jump', true);
       this.jumpSound.play();
+    }
+
+    if (!this.cursors.space.isDown) {
+      this.jumpFromFloorThisPress = false;
+    }
+
+    if (!this.jumpFromFloorThisPress && this.cursors.space.isDown && this.doubleJumpAvailable) {
+      this.doubleJumpAvailable = false;
+      this.setVelocityY(-jumpForce);
+      //Animacion y sonido de salto
+      this.play('char_jump', true);
+      this.jumpSound.play();
+    }
+
+    if (this.teclas.dash.isDown && this.dashAvailable) {
+      if (this.dashFramesCounter > 0) {
+        this.dashFramesCounter--;
+        if (this.dashFramesCounter <= 0) {
+          this.dashAvailable = false;
+        }
+      }
+      if (this.lastDirection) {
+        this.setVelocityX(-speed * 4);
+      } else {
+        this.setVelocityX(speed * 4);
+      }
+    }
+
+    if (!this.teclas.dash.isDown) {
+      if (this.dashFramesCounter < this.dashFramesTotal) {
+        this.dashAvailable = false;
+        this.dashFramesCounter++;
+      } else if (this.body.onFloor()) {
+        this.dashAvailable = true;
+      }
     }
 
     //DISPARO
