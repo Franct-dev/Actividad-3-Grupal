@@ -13,7 +13,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     // guardar las teclas
     this.cursors = this.scene.input.keyboard.createCursorKeys();
 
-    this.teclas = scene.input.keyboard.addKeys({
+    this.teclas = this.scene.input.keyboard.addKeys({
       dash: Phaser.Input.Keyboard.KeyCodes.SHIFT,
     });
 
