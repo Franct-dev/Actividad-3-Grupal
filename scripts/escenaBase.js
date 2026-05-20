@@ -206,9 +206,12 @@ export default class EscenaBase extends Phaser.Scene {
 
     //ENEMIGOS CON MOVIMIENTO VERTICAL (VOLADORES)
 
-    // 2. En el create(), crear el grupo y leer de Tiled
-    this.flyingEnemies = this.physics.add.group({ runChildUpdate: true });
-
+    this.flyingEnemies = this.physics.add.group({
+      runChildUpdate: true,
+      allowGravity: false, // Forzamos a que nadie en este grupo tenga gravedad por defecto
+      immovable: true, // Forzamos a que sean inmóviles por defecto
+    });
+    
     // const flyingLayer = map.objects.find(layer => layer.name === 'flying_enemies');
     // if (flyingLayer && flyingLayer.objects) {
     //     flyingLayer.objects.forEach(obj => {
@@ -218,6 +221,8 @@ export default class EscenaBase extends Phaser.Scene {
     // }
 
     const flyingEnemy = new FlyingEnemy(this, 200, 300);
+    
+    
     this.flyingEnemies.add(flyingEnemy);
 
     // 3. Colisiones (No necesita collider con plataformas porque flota)

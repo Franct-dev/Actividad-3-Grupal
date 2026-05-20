@@ -118,6 +118,10 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
   }
 
   takeDamage(enemyXPosition){
+
+    //Ignora la funcion si ya esta recibiendo daño (invulnerabilidad por si acaso)
+    if(this.inKnockback == true) return;
+
     this.health--; // Restamos uno de vida
 
     if (this.health <= 0) {
@@ -137,12 +141,21 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(impulseDirection * 300); // Fuerza horizontal hacia atrás
     this.setVelocityY(-250);                  // Un pequeño saltito hacia arriba (queda muy arcade)
 
-    this.setTint(0xff0000); // Pintamos al personaje de rojo para que se note el daño
-
     // TEMPORIZADOR: A los 200 milisegundos, le devolvemos el control al jugador
     this.scene.time.delayedCall(200, () => {
         this.inKnockback = false;
         this.clearTint(); // Quitamos el color rojo
+    });
+
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.2, // Baja la opacidad al 20% (casi invisible)
+      duration: 60, // Súper rápido: 60 milisegundos por trayecto
+      yoyo: true, // Va del 100% al 20% y vuelve al 100%
+      repeat: 3, // Repite el ciclo 3 veces (4 parpadeos en total)
+      onComplete: () => {
+        this.setAlpha(1);
+      },
     });
   }
 }
