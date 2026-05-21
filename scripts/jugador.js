@@ -32,50 +32,17 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
     //VIDA
 
+    this.maxHealth = 3;
     this.health = 3;
     this.inKnockback = false;
     
     //DISPARO
     this.canShoot = true;
     this.bullets = this.scene.physics.add.group({allowGravity:false});
+    this.shootCooldown = 500; //tiempo entre disparos (ms)
 
-    // ANIMACIONES
+    this.createAnimations();
 
-    //Ciclo de andar
-    this.walkAnim =  {}
-    this.walkAnim.key = 'char_walk';
-    this.walkAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
-        prefix: 'char_walk',
-        start: 1,
-        end: 2,
-      });
-    this.walkAnim.frameRate = 10;
-    this.walkAnim.repeat = -1;
-    this.scene.anims.create(this.walkAnim);
-
-    //Idle
-    this.idleAnim = {}
-    this.idleAnim.key = 'char_idle';
-    this.idleAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
-      prefix: 'char_idle',
-      start: 1,
-      end: 1,
-    });
-    this.idleAnim.frameRate = 10;
-    this.idleAnim.repeat = -1;
-    this.scene.anims.create(this.idleAnim);
-
-    //Salto
-    this.jumpAnim = {}
-    this.jumpAnim.key = 'char_jump';
-    this.jumpAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
-      prefix: 'char_jump',
-      start: 1,
-      end: 1,
-    });
-    this.jumpAnim.frameRate = 10;
-    this.jumpAnim.repeat = -1;
-    this.scene.anims.create(this.jumpAnim);
   }
 
   update() {
@@ -162,7 +129,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     this.canShoot = false;
 
     //cooldown del disparo
-    this.scene.time.delayedCall(500, () => {
+    this.scene.time.delayedCall(this.shootCooldown, () => {
         this.canShoot = true;
     });
 
@@ -179,6 +146,45 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
   }
 
+  createAnimations(){
+
+    //Ciclo de andar
+    this.walkAnim =  {}
+    this.walkAnim.key = 'char_walk';
+    this.walkAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+        prefix: 'char_walk',
+        start: 1,
+        end: 2,
+      });
+    this.walkAnim.frameRate = 10;
+    this.walkAnim.repeat = -1;
+    this.scene.anims.create(this.walkAnim);
+
+    //Idle
+    this.idleAnim = {}
+    this.idleAnim.key = 'char_idle';
+    this.idleAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+      prefix: 'char_idle',
+      start: 1,
+      end: 1,
+    });
+    this.idleAnim.frameRate = 10;
+    this.idleAnim.repeat = -1;
+    this.scene.anims.create(this.idleAnim);
+
+    //Salto
+    this.jumpAnim = {}
+    this.jumpAnim.key = 'char_jump';
+    this.jumpAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+      prefix: 'char_jump',
+      start: 1,
+      end: 1,
+    });
+    this.jumpAnim.frameRate = 10;
+    this.jumpAnim.repeat = -1;
+    this.scene.anims.create(this.jumpAnim);
+  }
+
   takeDamage(enemyXPosition){
 
     //Ignora la funcion si ya esta recibiendo daño (invulnerabilidad por si acaso)
@@ -187,6 +193,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     this.health--; // Restamos uno de vida
 
     if (this.health <= 0) {
+        this.health = 0;
         this.scene.lose(); // Si se queda sin vidas, muere
         return;
     }
@@ -218,6 +225,32 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
       onComplete: () => {
         this.setAlpha(1);
       },
+    });
+  }
+
+  heal(amount){
+
+    this.health += amount;
+    if(this.health > this.maxHealth) this.health = this.maxHealth; //limite de vida maxima
+  }
+
+  shootSpeedPowerUp(amount, duration){
+
+    this.shootCooldown -= amount;
+
+    if(this.shootCooldown < 100) this.shootCooldown = 100; //limite de velocidad de disparo minima
+
+    return;
+
+    const originalCooldown = player.shootCooldown;
+
+    player.shootCooldown = 150;
+
+    player.setTint(0x00ffff);
+
+    this.time.delayedCall(6000, () => {
+        player.shootCooldown = originalCooldown;
+        player.clearTint();                      
     });
   }
 }

@@ -38,9 +38,111 @@ export default class EscenaBase extends Phaser.Scene {
     this.createTilemap();
     this.createSounds();
     this.createPlayer();
-    this.createSceneObjects();  
+    this.createSceneObjects();
+    this.setupTimer();
+    this.createEndGameScreen();
+    this.setupSceneObjectsCollisions();
+    this.createEnemies();
+    this.createHUD();
+    this.createPowerUps();
+  }
 
-    //TEMPORIZADOR
+  update() {
+    //actualizar temporizador
+    if (this.totalTime > 0) {
+      this.player.update();
+    }
+  }
+
+  // FUNCIONES
+
+  //#region Funciones en CREATE
+
+  createTilemap() {
+
+    this.map = this.make.tilemap({ key: "map" });
+    const tiles = this.map.addTilesetImage("tilemap_64", "tilesheet", 64, 64, 0, 0);
+    this.platforms = this.map.createLayer("platformer", tiles, 0, 0);
+    this.decoration = this.map.createLayer("decoration", tiles, 0, 0);
+
+    this.platforms.setCollisionByExclusion(-1, true);
+
+    //PUERTAS
+
+    // añadir la puerta abierta y la cerrada
+    this.door = this.map.createLayer("door", tiles, 0, 0);
+    this.openDoor = this.map.createLayer("door_open", tiles, 0, 0);
+    // ocultar la puerta abierta hasta que se recoja la llave
+    this.openDoor.setVisible(false);
+  }
+
+  createSounds(){
+
+    this.jumpSound = this.sound.add("jump");
+    this.pickupSound = this.sound.add("pickup");
+    this.victorySound = this.sound.add("victory");
+    this.defeatSound = this.sound.add("defeat");
+  }
+
+  createPlayer(){
+
+    // Crear el jugador con referencia al sonido de salto
+    this.player = new Jugador(this, 0, 425, this.jumpSound);
+    this.player.setCollideWorldBounds(true);
+    this.physics.add.collider(this.player, this.platforms);
+
+    // hacer que la camara principal siga al jugador
+    this.cameras.main.startFollow(this.player);
+    // añadir limites a la camara para que no se vea el fondo al llegar a los bordes
+    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+  }
+
+  createSceneObjects(){
+    //COLISION PUERTAS: hay que hacerlo despues de inicializar al jugador para que este la referencia asignada
+    //tambien hay que crear antes los sprites de las puertas para que se vean por detras del jugador
+
+    //configurar el overlap de la puerta abierta
+    const doorTiles = this.openDoor
+      .getTilesWithin()
+      .filter((t) => t.index !== -1)
+      .map((t) => t.index);
+    this.openDoor.setTileIndexCallback(doorTiles, this.goThroughDoor, this);
+    this.physics.add.overlap(this.player, this.openDoor);
+
+    //LLAVE
+
+    //inicializar que el jugador no ha recogido la llave todavia
+    this.hasKey = false;
+    //crear la llave en su posición y marcarla como inmóvil y que no utilice gravedad
+    this.key = this.physics.add.sprite(1500, 192, "key");
+    this.key.setImmovable(true);
+    this.key.body.setAllowGravity(false);
+    //configurar el overlap para que la llave detecte al jugador
+    this.physics.add.overlap(this.player, this.key, this.pickupKey, null, this);
+
+    //PINCHOS
+
+    //crear pinchos en cada posicion de objeto creado en el tilemap
+    //esta forma de buscar la layer es más compleja, pero al hacerlo con getObjectLayer daba error al acceder a ojects
+    //de esta manera si que funciona sin problema
+    const spikeLayer = this.map.objects.find((layer) => layer.name === "spikes");
+    if (spikeLayer && spikeLayer.objects) {
+      this.spikes = this.physics.add.staticGroup();
+
+      spikeLayer.objects.forEach((obj) => {
+        const spike = this.spikes.create(obj.x, obj.y, "spike");
+        //para que aparezcan en la misma posicion definida en la capa de Tiled
+        spike.setOrigin(0, 0);
+        //si no se añade, no se actualiza la colision y se queda desplazada
+        spike.refreshBody();
+      });
+
+      //añadir el overlap a los pinchos para que termine la partida
+      this.physics.add.overlap(this.player, this.spikes, this.lose, null, this);
+    }
+  }
+
+  setupTimer(){
 
     // inicializar el tiempo cada vez que se reinicia la escena
     this.totalTime = 60;
@@ -63,7 +165,9 @@ export default class EscenaBase extends Phaser.Scene {
       loop: true,
     });
 
-    //FIN DE PARTIDA
+  }
+
+  createEndGameScreen(){
 
     this.txtEndGame = this.add
       .text(800, 400, "", {
@@ -95,26 +199,10 @@ export default class EscenaBase extends Phaser.Scene {
       this.scene.restart();
     });
 
-    //DISPARO
+  }
 
-    // Cuando cualquier objeto con onWorldBounds llegue al borde del mundo, se destruye
-    this.physics.world.on("worldbounds", (body) => {
-      body.gameObject.destroy();
-    });
-
-    // configurar colisiones de la bala
-    this.physics.add.collider(
-      this.player.bullets,
-      this.platforms,
-      (bullet, tile) => {
-        bullet.destroy();
-      },
-      null,
-      this,
-    );
-
-    //#region ENEMIGOS
-
+  createEnemies(){
+    
     //ENEMIGOS ESTATICOS
 
     this.staticEnemies = this.physics.add.staticGroup({
@@ -219,9 +307,29 @@ export default class EscenaBase extends Phaser.Scene {
       null,
       this,
     );
-    //#endregion
+  }
 
-    //HUD
+  setupSceneObjectsCollisions(){
+     //DISPARO
+
+    // Cuando cualquier objeto con onWorldBounds llegue al borde del mundo, se destruye
+    this.physics.world.on("worldbounds", (body) => {
+      body.gameObject.destroy();
+    });
+
+    // configurar colisiones de la bala
+    this.physics.add.collider(
+      this.player.bullets,
+      this.platforms,
+      (bullet, tile) => {
+        bullet.destroy();
+      },
+      null,
+      this,
+    );
+  }
+
+  createHUD(){
 
     // añadir puntuacion al registro
     this.registry.set("score", 0);
@@ -229,103 +337,45 @@ export default class EscenaBase extends Phaser.Scene {
     // crear la escena aparte del HUD
     this.scene.launch("HUDScene");
   }
+  
+  createPowerUps(){
 
-  update() {
-    //actualizar temporizador
-    if (this.totalTime > 0) {
-      this.player.update();
-    }
-  }
+    //VELOCIDAD
 
-  // FUNCIONES
+    this.shootSpeed = this.physics.add.staticGroup();
+    
+    const powerUp = this.shootSpeed.create(600, 250, 'bullet');
+    powerUp.setTint(0xF54927);
 
-  //#region Funciones en CREATE
+    this.physics.add.overlap(this.player, this.shootSpeed, (player, item) => {
 
-  createTilemap() {
+        item.destroy();
+        player.shootSpeedPowerUp(100, 5000);
+        
+    });
 
-    this.map = this.make.tilemap({ key: "map" });
-    const tiles = this.map.addTilesetImage("tilemap_64", "tilesheet", 64, 64, 0, 0);
-    this.platforms = this.map.createLayer("platformer", tiles, 0, 0);
-    this.decoration = this.map.createLayer("decoration", tiles, 0, 0);
+    //CURACION
 
-    this.platforms.setCollisionByExclusion(-1, true);
+    this.healItems = this.physics.add.staticGroup();
+    const healItem = this.healItems.create(700, 250, 'bullet');
+    healItem.setTint(0x27F549);
 
-    //PUERTAS
+    this.physics.add.overlap(this.player, this.healItems, (player, item) => {
 
-    // añadir la puerta abierta y la cerrada
-    this.door = this.map.createLayer("door", tiles, 0, 0);
-    this.openDoor = this.map.createLayer("door_open", tiles, 0, 0);
-    // ocultar la puerta abierta hasta que se recoja la llave
-    this.openDoor.setVisible(false);
-  }
+        if (player.health < player.maxHealth) {
+            player.heal(1);    
+            item.destroy();   
 
-  createSounds(){
+            //actualizar el valor de vida en el registro para que se actualice el HUD
+            this.registry.set('health', player.health);
+        }
+    });
 
-    this.jumpSound = this.sound.add("jump");
-    this.pickupSound = this.sound.add("pickup");
-    this.victorySound = this.sound.add("victory");
-    this.defeatSound = this.sound.add("defeat");
-  }
-
-  createPlayer(){
-
-    // Crear el jugador con referencia al sonido de salto
-    this.player = new Jugador(this, 0, 425, this.jumpSound);
-    this.player.setCollideWorldBounds(true);
-    this.physics.add.collider(this.player, this.platforms);
-
-    // hacer que la camara principal siga al jugador
-    this.cameras.main.startFollow(this.player);
-    // añadir limites a la camara para que no se vea el fondo al llegar a los bordes
-    this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
-  }
-
-  createSceneObjects(){
-    //COLISION PUERTAS: hay que hacerlo despues de inicializar al jugador para que este la referencia asignada
-    //tambien hay que crear antes los sprites de las puertas para que se vean por detras del jugador
-
-    //configurar el overlap de la puerta abierta
-    const doorTiles = this.openDoor
-      .getTilesWithin()
-      .filter((t) => t.index !== -1)
-      .map((t) => t.index);
-    this.openDoor.setTileIndexCallback(doorTiles, this.goThroughDoor, this);
-    this.physics.add.overlap(this.player, this.openDoor);
-
-    //LLAVE
-
-    //inicializar que el jugador no ha recogido la llave todavia
-    this.hasKey = false;
-    //crear la llave en su posición y marcarla como inmóvil y que no utilice gravedad
-    this.key = this.physics.add.sprite(1500, 192, "key");
-    this.key.setImmovable(true);
-    this.key.body.setAllowGravity(false);
-    //configurar el overlap para que la llave detecte al jugador
-    this.physics.add.overlap(this.player, this.key, this.pickupKey, null, this);
-
-    //PINCHOS
-
-    //crear pinchos en cada posicion de objeto creado en el tilemap
-    //esta forma de buscar la layer es más compleja, pero al hacerlo con getObjectLayer daba error al acceder a ojects
-    //de esta manera si que funciona sin problema
-    const spikeLayer = this.map.objects.find((layer) => layer.name === "spikes");
-    if (spikeLayer && spikeLayer.objects) {
-      this.spikes = this.physics.add.staticGroup();
-
-      spikeLayer.objects.forEach((obj) => {
-        const spike = this.spikes.create(obj.x, obj.y, "spike");
-        //para que aparezcan en la misma posicion definida en la capa de Tiled
-        spike.setOrigin(0, 0);
-        //si no se añade, no se actualiza la colision y se queda desplazada
-        spike.refreshBody();
-      });
-
-      //añadir el overlap a los pinchos para que termine la partida
-      this.physics.add.overlap(this.player, this.spikes, this.lose, null, this);
-    }
   }
 
   //#endregion
+
+  //#region Funciones de eventos
 
   // parar el juego cuando se gana / pierde
   endGame() {
@@ -377,13 +427,18 @@ export default class EscenaBase extends Phaser.Scene {
 
   // evento cuando el jugador choca contra un enemigo
   playerEnemyCollision(player, enemy) {
+    
     player.takeDamage(enemy.x);
+    this.registry.set('health', player.health);
   }
 
   //añadir puntuacion
-
   addScore(points) {
     const currentScore = this.registry.get("score");
     this.registry.set("score", currentScore + points);
   }
+
+  //#endregion
+
+  
 }

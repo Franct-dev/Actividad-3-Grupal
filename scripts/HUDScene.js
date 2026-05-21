@@ -29,5 +29,18 @@ export default class HUDScene extends Phaser.Scene {
         this.registry.events.on('changedata-totalTime', (parent, newValue) => {
             this.txtTime.setText('TIEMPO: ' + newValue);
         });
+        
+        //Texto vida
+        this.txtHealth = this.add.text(20, 100, 'VIDA: 3', {
+            fontSize: '32px',
+            fill: '#ffffff',
+            fontFamily: 'Calibri'
+        });
+
+        //registrar un evento para actualizar el texto cada vez que cambie la vida
+        this.registry.events.on('changedata-health', (parent, newValue) => {
+            this.txtHealth.setText('VIDA: ' + newValue);
+        });
+
     }
 }
