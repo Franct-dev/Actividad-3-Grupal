@@ -1,5 +1,6 @@
 import EscenaBase from './escenaBase.js';
 import HUDScene from './HUDScene.js';
+import MenuScene from './menuScene.js';
 
 // Configuración general del juego
 const config = {
@@ -15,7 +16,7 @@ const config = {
         }
     },
     //importante mantener el orden de las escenas para que primero cargue EscenaBase
-    scene: [EscenaBase, HUDScene]
+    scene: [MenuScene, EscenaBase, HUDScene]
 };
 
 const game = new Phaser.Game(config);

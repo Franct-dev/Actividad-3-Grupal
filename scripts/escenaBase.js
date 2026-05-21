@@ -16,14 +16,12 @@ export default class EscenaBase extends Phaser.Scene {
     this.load.image("player", "assets/char_idle1.png"); // Imagen del jugador
     this.load.image("key", "assets/key.png"); // imagen de la llave
     this.load.image("spike", "assets/spikes.png"); // imagen de los pinchos
-    this.load.audio("jump", "assets/jump.mp3"); // sonido de salto
-    this.load.audio("pickup", "assets/pickup.mp3"); // sonido de recoger la llave
-    this.load.audio("victory", "assets/victory.mp3"); // sonido de victoria
-    this.load.audio("defeat", "assets/defeat.mp3"); // sonido de derrota
     this.load.image("bullet", "assets/bullet.png"); //Sprite de la bala
     this.load.image("enemy", "assets/enemy.png"); //Sprite del enemigo
     this.load.image("enemy_patrol", "assets/enemy.png"); //Sprite del enemigo que se mueve horizontalmente
     this.load.image("enemy_flying", "assets/enemy.png"); //Sprite del enemigo volador
+
+    this.loadAudio(); //cargar todos los sonidos
 
     // Cargar atlas para el jugador (nueva línea añadida)
     this.load.atlas(
@@ -56,6 +54,24 @@ export default class EscenaBase extends Phaser.Scene {
 
   // FUNCIONES
 
+  //#region Funciones en PRELOAD
+
+  loadAudio() {
+
+    //player
+    this.load.audio("jump", "assets/jump.mp3"); // salto
+    this.load.audio("shoot", "assets/jump.mp3"); //disparo
+    this.load.audio("takeDamage", "assets/jump.mp3"); //recibir daño
+    
+    //entorno
+    this.load.audio("bulletImpact", "assets/jump.mp3");
+    this.load.audio("pickup", "assets/pickup.mp3"); // recoger objeto
+    this.load.audio("victory", "assets/victory.mp3"); // victoria
+    this.load.audio("defeat", "assets/defeat.mp3"); // derrota
+  }
+
+  //#endregion
+
   //#region Funciones en CREATE
 
   createTilemap() {
@@ -82,12 +98,13 @@ export default class EscenaBase extends Phaser.Scene {
     this.pickupSound = this.sound.add("pickup");
     this.victorySound = this.sound.add("victory");
     this.defeatSound = this.sound.add("defeat");
+    this.bulletImpactSound = this.sound.add("bulletImpact");
   }
 
   createPlayer(){
 
     // Crear el jugador con referencia al sonido de salto
-    this.player = new Jugador(this, 0, 425, this.jumpSound);
+    this.player = new Jugador(this, 0, 425);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
 
@@ -310,7 +327,8 @@ export default class EscenaBase extends Phaser.Scene {
   }
 
   setupSceneObjectsCollisions(){
-     //DISPARO
+     
+    //DISPARO
 
     // Cuando cualquier objeto con onWorldBounds llegue al borde del mundo, se destruye
     this.physics.world.on("worldbounds", (body) => {
@@ -323,6 +341,7 @@ export default class EscenaBase extends Phaser.Scene {
       this.platforms,
       (bullet, tile) => {
         bullet.destroy();
+        this.bulletImpactSound.play();
       },
       null,
       this,
@@ -419,6 +438,7 @@ export default class EscenaBase extends Phaser.Scene {
   // evento cuando una bala golpee contra un enemigo
   enemyTakeDamage(bullet, enemy) {
     bullet.destroy();
+    this.bulletImpactSound.play();
     enemy.takeDamage(1);
     if (enemy.health <= 0) {
       this.addScore(100); //añadir puntos al matar a un enemigo

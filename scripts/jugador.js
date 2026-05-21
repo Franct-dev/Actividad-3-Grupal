@@ -1,6 +1,6 @@
 // Definimos una clase Jugador que extiende de Sprite con físicas arcade
 export default class Jugador extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y, jumpSound) {
+  constructor(scene, x, y) {
 
     super(scene, x, y, 'player');
 
@@ -19,7 +19,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     });
 
     // guardar una referencia al sonido de salto
-    this.jumpSound = jumpSound;
+    this.jumpSound = this.scene.jumpSound;
 
     //DOBLE SALTO Y DASH
 
@@ -144,6 +144,8 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     bullet.setCollideWorldBounds(true);
     bullet.body.onWorldBounds = true;
 
+    this.scene.sound.play('shoot');
+
   }
 
   createAnimations(){
@@ -226,6 +228,8 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
         this.setAlpha(1);
       },
     });
+
+    this.scene.sound.play('takeDamage');
   }
 
   heal(amount){
