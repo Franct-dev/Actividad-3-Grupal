@@ -13,12 +13,15 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     // guardar las teclas
     this.cursors = this.scene.input.keyboard.createCursorKeys();
 
-    this.teclas = this.scene.input.keyboard.addKeys({
+    this.keys = this.scene.input.keyboard.addKeys({
       dash: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+      shoot: Phaser.Input.Keyboard.KeyCodes.Z,
     });
 
     // guardar una referencia al sonido de salto
     this.jumpSound = jumpSound;
+
+    //DOBLE SALTO Y DASH
 
     this.doubleJumpAvailable = true;
     this.jumpFromFloorThisPress = false;
@@ -33,7 +36,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     this.inKnockback = false;
     
     //DISPARO
-    this.shootKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+    this.canShoot = true;
     this.bullets = this.scene.physics.add.group({allowGravity:false});
 
     // ANIMACIONES
@@ -87,7 +90,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     if (this.body.velocity.x > 0) this.setFlipX(false);
     else if (this.body.velocity.x < 0) this.setFlipX(true);
 
-    // movimiento con las fkechas
+    // movimiento con las flechas
     if (this.cursors.left.isDown) {
       this.lastDirection = true;
       this.setVelocityX(-speed); // Izquierda     
@@ -124,7 +127,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
       this.jumpSound.play();
     }
 
-    if (this.teclas.dash.isDown && this.dashAvailable) {
+    if (this.keys.dash.isDown && this.dashAvailable) {
       if (this.dashFramesCounter > 0) {
         this.dashFramesCounter--;
         if (this.dashFramesCounter <= 0) {
@@ -138,7 +141,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    if (!this.teclas.dash.isDown) {
+    if (!this.keys.dash.isDown) {
       if (this.dashFramesCounter < this.dashFramesTotal) {
         this.dashAvailable = false;
         this.dashFramesCounter++;
@@ -148,12 +151,20 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     }
 
     //DISPARO
-    if (Phaser.Input.Keyboard.JustDown(this.shootKey)) {
+    if (this.keys.shoot.isDown && this.canShoot) {
         this.shoot();
     }
   }
 
   shoot(){
+
+    //bloquear el disparo
+    this.canShoot = false;
+
+    //cooldown del disparo
+    this.scene.time.delayedCall(500, () => {
+        this.canShoot = true;
+    });
 
     let bullet = this.bullets.create(this.x, this.y, 'bullet');
 
