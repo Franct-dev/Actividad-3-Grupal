@@ -9,10 +9,22 @@ export default class EscenaBase extends Phaser.Scene {
     super({ key: "EscenaBase" });
   }
 
+  //para gestionar el nivel al que se va a jugar
+  init(data){
+
+    this.currentLevel = data.level || 1; //si no recibe un numero de nivel, por defecto es el 1
+
+  }
+
   preload() {
     // cargar todos los recursos
     this.load.image("tilesheet", "assets/tilemap_64.png"); // tilemap
-    this.load.tilemapTiledJSON("map", "assets/tilemap_64.json"); // Mapa en formato JSON
+
+    //cargar el tilemap del nivel actual
+    if(this.currentLevel === 1){
+      this.load.tilemapTiledJSON("map1", "assets/tilemap_64.json");
+    } else this.load.tilemapTiledJSON("map2", "assets/tilemap_64.json");
+
     this.load.image("player", "assets/char_idle1.png"); // Imagen del jugador
     this.load.image("key", "assets/key.png"); // imagen de la llave
     this.load.image("spike", "assets/spikes.png"); // imagen de los pinchos
@@ -76,7 +88,8 @@ export default class EscenaBase extends Phaser.Scene {
 
   createTilemap() {
 
-    this.map = this.make.tilemap({ key: "map" });
+    //crear el tilemap del nivel actual
+    this.map = this.make.tilemap({ key: "map" + this.currentLevel });
     const tiles = this.map.addTilesetImage("tilemap_64", "tilesheet", 64, 64, 0, 0);
     this.platforms = this.map.createLayer("platformer", tiles, 0, 0);
     this.decoration = this.map.createLayer("decoration", tiles, 0, 0);
@@ -399,7 +412,7 @@ export default class EscenaBase extends Phaser.Scene {
   // parar el juego cuando se gana / pierde
   endGame() {
     this.physics.pause(); // Detener físicas
-    this.restartBtn.setVisible(true); // Mostrar botón para reiniciar
+    // this.restartBtn.setVisible(true); // Mostrar botón para reiniciar
     this.timer.remove(); // Detener el temporizador para que no siga restando tiempo
   }
 
@@ -427,10 +440,20 @@ export default class EscenaBase extends Phaser.Scene {
   goThroughDoor() {
     if (this.hasKey == false) return;
 
-    this.txtEndGame.setText("¡HAS GANADO!");
+    this.txtEndGame.setText("¡NIVEL SUPERADO!");
     this.txtEndGame.setColor("#1eff00");
     this.endGame();
     this.victorySound.play();
+
+    // si esta en el nivel 1, se pasa al nivel 2 tras un delay
+    if (this.currentLevel === 1) {
+        this.time.delayedCall(2000, () => {
+            this.scene.start('EscenaBase', { level: 2 }); // recarga la escena con el nivel 2
+        });
+    //si ya esta en el nivel 2, se acaba la partida
+    } else {
+        this.txtEndGame.setText("¡TE HAS PASADO EL JUEGO COJONUDAMENTE!");
+    }
   }
 
   //ENEMIGOS
