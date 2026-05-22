@@ -97,6 +97,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     if (this.keys.dash.isDown && this.dashAvailable) {
       if (this.dashFramesCounter > 0) {
         this.dashFramesCounter--;
+
         if (this.dashFramesCounter <= 0) {
           this.dashAvailable = false;
         }
@@ -113,7 +114,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
         this.dashAvailable = false;
         this.dashFramesCounter++;
       } else if (this.body.onFloor()) {
-        this.dashAvailable = true;
+        this.dashAvailable = true;          
       }
     }
 
@@ -144,7 +145,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     bullet.setCollideWorldBounds(true);
     bullet.body.onWorldBounds = true;
 
-    this.scene.sound.play('shoot');
+    this.scene.shootSound.play();
 
   }
 

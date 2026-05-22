@@ -10,7 +10,7 @@ export default class EscenaBase extends Phaser.Scene {
   }
 
   //para gestionar el nivel al que se va a jugar
-  init(data){
+  init(data) {
 
     this.currentLevel = data.level || 1; //si no recibe un numero de nivel, por defecto es el 1
 
@@ -21,7 +21,7 @@ export default class EscenaBase extends Phaser.Scene {
     this.load.image("tilesheet", "assets/tilemap_64.png"); // tilemap
 
     //cargar el tilemap del nivel actual
-    if(this.currentLevel === 1){
+    if (this.currentLevel === 1) {
       this.load.tilemapTiledJSON("map1", "assets/tilemap_64.json");
     } else this.load.tilemapTiledJSON("map2", "assets/tilemap_64.json");
 
@@ -30,8 +30,13 @@ export default class EscenaBase extends Phaser.Scene {
     this.load.image("spike", "assets/spikes.png"); // imagen de los pinchos
     this.load.image("bullet", "assets/bullet.png"); //Sprite de la bala
     this.load.image("enemy", "assets/enemy.png"); //Sprite del enemigo
-    this.load.image("enemy_patrol", "assets/enemy.png"); //Sprite del enemigo que se mueve horizontalmente
-    this.load.image("enemy_flying", "assets/enemy.png"); //Sprite del enemigo volador
+    this.load.image("enemy_flying", "assets/enemy2.png"); //Sprite del enemigo volador
+    this.load.image("enemy_patrol", "assets/enemy3.png"); //Sprite del enemigo que se mueve horizontalmente
+
+    //OBJETOS RECOGIBLES
+    this.load.image("life", "assets/life.png");
+    this.load.image("powerUp", "assets/bullet.png");
+    this.load.image("coin", "assets/coin.png");
 
     this.loadAudio(); //cargar todos los sonidos
 
@@ -46,7 +51,7 @@ export default class EscenaBase extends Phaser.Scene {
   create() {
 
     this.createTilemap();
-    this.createSounds();
+    this.createAudio();
     this.createPlayer();
     this.createSceneObjects();
     this.setupTimer();
@@ -55,6 +60,7 @@ export default class EscenaBase extends Phaser.Scene {
     this.createEnemies();
     this.createHUD();
     this.createPowerUps();
+    this.createCollectibles();
   }
 
   update() {
@@ -71,15 +77,17 @@ export default class EscenaBase extends Phaser.Scene {
   loadAudio() {
 
     //player
-    this.load.audio("jump", "assets/jump.mp3"); // salto
-    this.load.audio("shoot", "assets/jump.mp3"); //disparo
-    this.load.audio("takeDamage", "assets/jump.mp3"); //recibir daño
-    
+    this.load.audio("jump", "assets/sound/jump.wav"); // salto
+    this.load.audio("shoot", "assets/sound/shoot.mp3"); //disparo
+    this.load.audio("takeDamage", "assets/sound/takeDamage.wav"); //recibir daño
+
     //entorno
-    this.load.audio("bulletImpact", "assets/jump.mp3");
-    this.load.audio("pickup", "assets/pickup.mp3"); // recoger objeto
-    this.load.audio("victory", "assets/victory.mp3"); // victoria
-    this.load.audio("defeat", "assets/defeat.mp3"); // derrota
+    this.load.audio("bulletImpact", "assets/sound/bulletImpact.wav");
+    this.load.audio("enemyImpact", "assets/sound/enemyImpact.wav");
+    this.load.audio("pickup", "assets/sound/pickup.wav"); // recoger objeto
+    this.load.audio("powerUp", "assets/sound/powerUp.wav") //power up / curacion
+    this.load.audio("defeat", "assets/sound/defeat.mp3"); // derrota
+    this.load.audio("victory", "assets/sound/victory.mp3"); // victoria
   }
 
   //#endregion
@@ -105,16 +113,19 @@ export default class EscenaBase extends Phaser.Scene {
     this.openDoor.setVisible(false);
   }
 
-  createSounds(){
+  createAudio() {
 
     this.jumpSound = this.sound.add("jump");
     this.pickupSound = this.sound.add("pickup");
     this.victorySound = this.sound.add("victory");
     this.defeatSound = this.sound.add("defeat");
+    this.shootSound = this.sound.add("shoot");
     this.bulletImpactSound = this.sound.add("bulletImpact");
+    this.enemyImpactSound = this.sound.add("enemyImpact");
+    this.powerUpSound = this.sound.add("powerUp");
   }
 
-  createPlayer(){
+  createPlayer() {
 
     // Crear el jugador con referencia al sonido de salto
     this.player = new Jugador(this, 0, 425);
@@ -127,7 +138,7 @@ export default class EscenaBase extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
   }
 
-  createSceneObjects(){
+  createSceneObjects() {
     //COLISION PUERTAS: hay que hacerlo despues de inicializar al jugador para que este la referencia asignada
     //tambien hay que crear antes los sprites de las puertas para que se vean por detras del jugador
 
@@ -172,7 +183,7 @@ export default class EscenaBase extends Phaser.Scene {
     }
   }
 
-  setupTimer(){
+  setupTimer() {
 
     // inicializar el tiempo cada vez que se reinicia la escena
     this.totalTime = 60;
@@ -197,7 +208,7 @@ export default class EscenaBase extends Phaser.Scene {
 
   }
 
-  createEndGameScreen(){
+  createEndGameScreen() {
 
     this.txtEndGame = this.add
       .text(800, 400, "", {
@@ -208,7 +219,7 @@ export default class EscenaBase extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Boton que aparecera cuando se gane / pierda
+    // BOTON DE REINICIAR
     this.restartBtn = this.add
       .text(800, 500, "REINICIAR", {
         fontSize: "30px",
@@ -226,13 +237,34 @@ export default class EscenaBase extends Phaser.Scene {
       //quitar los eventos registrados desde el HUD para cuando se reinicie la escena
       this.registry.events.off("changedata-score");
       this.registry.events.off("changedata-totalTime");
-      this.scene.restart();
+      //reiniciar la escena especificando el nivel en el que se encuentra por si acaso
+      this.scene.restart({ level: this.currentLevel });
     });
 
+    // BOTON DE SIGUIENTE NIVEL
+    this.nextLevelBtn = this.add
+      .text(800, 500, "SIGUIENTE NIVEL", {
+        fontSize: "30px",
+        fill: "#fff",
+        backgroundColor: "#000",
+        fontFamily: "Calibri",
+        padding: { x: 20, y: 10 },
+      })
+      .setInteractive()
+      .setVisible(false)
+      .setOrigin(0.5);
+
+    // añadir al boton que se reinicie el juego cuando se le haga clic
+    this.nextLevelBtn.on("pointerdown", () => {
+      //quitar los eventos registrados desde el HUD para cuando se reinicie la escena
+      this.registry.events.off("changedata-score");
+      this.registry.events.off("changedata-totalTime");
+      this.loadNextLevel();
+    });
   }
 
-  createEnemies(){
-    
+  createEnemies() {
+
     //ENEMIGOS ESTATICOS
 
     this.staticEnemies = this.physics.add.staticGroup({
@@ -268,7 +300,7 @@ export default class EscenaBase extends Phaser.Scene {
       this,
     );
 
-    //ENEMIGOS QUE PATRULLAN HORIZONTALMENTE
+    //ENEMIGOS QUE PATRULLAN HORIZONTALMENTE (GOOMBAS)
 
     this.patrolEnemies = this.physics.add.group({ runChildUpdate: true });
 
@@ -339,8 +371,8 @@ export default class EscenaBase extends Phaser.Scene {
     );
   }
 
-  setupSceneObjectsCollisions(){
-     
+  setupSceneObjectsCollisions() {
+
     //DISPARO
 
     // Cuando cualquier objeto con onWorldBounds llegue al borde del mundo, se destruye
@@ -361,7 +393,7 @@ export default class EscenaBase extends Phaser.Scene {
     );
   }
 
-  createHUD(){
+  createHUD() {
 
     // añadir puntuacion al registro
     this.registry.set("score", 0);
@@ -369,40 +401,53 @@ export default class EscenaBase extends Phaser.Scene {
     // crear la escena aparte del HUD
     this.scene.launch("HUDScene");
   }
-  
-  createPowerUps(){
+
+  createPowerUps() {
 
     //VELOCIDAD
 
     this.shootSpeed = this.physics.add.staticGroup();
-    
-    const powerUp = this.shootSpeed.create(600, 250, 'bullet');
+
+    const powerUp = this.shootSpeed.create(600, 250, 'powerUp');
     powerUp.setTint(0xF54927);
 
     this.physics.add.overlap(this.player, this.shootSpeed, (player, item) => {
 
-        item.destroy();
-        player.shootSpeedPowerUp(100, 5000);
-        
+      item.destroy();
+      player.shootSpeedPowerUp(100, 5000);
+      this.powerUpSound.play(); 
     });
 
     //CURACION
 
     this.healItems = this.physics.add.staticGroup();
-    const healItem = this.healItems.create(700, 250, 'bullet');
-    healItem.setTint(0x27F549);
+    const healItem = this.healItems.create(700, 250, 'life');
 
     this.physics.add.overlap(this.player, this.healItems, (player, item) => {
 
-        if (player.health < player.maxHealth) {
-            player.heal(1);    
-            item.destroy();   
-
-            //actualizar el valor de vida en el registro para que se actualice el HUD
-            this.registry.set('health', player.health);
-        }
+      if (player.health < player.maxHealth) {
+        player.heal(1);
+        item.destroy();
+        //actualizar el valor de vida en el registro para que se actualice el HUD
+        this.registry.set('health', player.health);
+        this.powerUpSound.play(); 
+      }
     });
 
+  }
+
+  createCollectibles() {
+
+    this.coins = this.physics.add.staticGroup();
+
+    this.coins.create(400, 200, 'coin'); 
+    this.coins.create(700, 200, 'coin');
+
+    this.physics.add.overlap(this.player, this.coins, (player, coin) => {
+      coin.destroy();    
+      this.addScore(200);  
+      this.pickupSound.play(); 
+    });
   }
 
   //#endregion
@@ -412,7 +457,6 @@ export default class EscenaBase extends Phaser.Scene {
   // parar el juego cuando se gana / pierde
   endGame() {
     this.physics.pause(); // Detener físicas
-    // this.restartBtn.setVisible(true); // Mostrar botón para reiniciar
     this.timer.remove(); // Detener el temporizador para que no siga restando tiempo
   }
 
@@ -432,27 +476,40 @@ export default class EscenaBase extends Phaser.Scene {
   lose() {
     this.txtEndGame.setText("HAS PERDIDO");
     this.txtEndGame.setColor("#ff0000");
-    this.endGame();
+    this.restartBtn.setVisible(true);
     this.defeatSound.play();
+    this.endGame();
   }
 
   //para cuando se gana al pasar por la puerta abierta
   goThroughDoor() {
+
     if (this.hasKey == false) return;
+    this.win();
+  }
 
-    this.txtEndGame.setText("¡NIVEL SUPERADO!");
+  win() {
+    //muestra un mensaje u otro segun si es el primer o el segundo nivel
+    if (this.currentLevel !== 2) {
+      this.txtEndGame.setText("¡NIVEL SUPERADO!");
+      this.nextLevelBtn.setVisible(true);
+    }
+    else {
+      this.txtEndGame.setText("¡JUEGO COMPLETADO!");
+    }
     this.txtEndGame.setColor("#1eff00");
-    this.endGame();
     this.victorySound.play();
+    this.endGame();
+  }
 
-    // si esta en el nivel 1, se pasa al nivel 2 tras un delay
+  loadNextLevel() {
+    // si esta en el nivel 1, se pasa al nivel 2
     if (this.currentLevel === 1) {
-        this.time.delayedCall(2000, () => {
-            this.scene.start('EscenaBase', { level: 2 }); // recarga la escena con el nivel 2
-        });
+      this.scene.start('EscenaBase', { level: 2 }); // recarga la escena especificando el nivel 2 
+    }
     //si ya esta en el nivel 2, se acaba la partida
-    } else {
-        this.txtEndGame.setText("¡TE HAS PASADO EL JUEGO COJONUDAMENTE!");
+    else {
+
     }
   }
 
@@ -461,7 +518,7 @@ export default class EscenaBase extends Phaser.Scene {
   // evento cuando una bala golpee contra un enemigo
   enemyTakeDamage(bullet, enemy) {
     bullet.destroy();
-    this.bulletImpactSound.play();
+    this.enemyImpactSound.play();
     enemy.takeDamage(1);
     if (enemy.health <= 0) {
       this.addScore(100); //añadir puntos al matar a un enemigo
@@ -470,7 +527,7 @@ export default class EscenaBase extends Phaser.Scene {
 
   // evento cuando el jugador choca contra un enemigo
   playerEnemyCollision(player, enemy) {
-    
+
     player.takeDamage(enemy.x);
     this.registry.set('health', player.health);
   }
@@ -483,5 +540,5 @@ export default class EscenaBase extends Phaser.Scene {
 
   //#endregion
 
-  
+
 }

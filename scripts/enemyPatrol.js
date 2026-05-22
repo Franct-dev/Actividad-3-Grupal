@@ -15,7 +15,7 @@ export default class EnemyPatrol extends Phaser.Physics.Arcade.Sprite {
         // Variables de movimiento tipo Goomba
         this.speed = 80;       // Velocidad de caminata
         this.direction = -1;   // -1 = Izquierda, 1 = Derecha (empieza yendo a la izquierda)
-        this.health = 1;       // Puntos de vida
+        this.health = 2;       // Puntos de vida
 
         // Le aplicamos la velocidad inicial
         this.setVelocityX(this.speed * this.direction);
