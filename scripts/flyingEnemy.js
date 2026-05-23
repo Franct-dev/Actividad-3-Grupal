@@ -21,6 +21,9 @@ export default class FlyingEnemy extends Phaser.Physics.Arcade.Sprite {
         loop: -1, // Bucle infinito
         //ease: "Sine.easeInOut", // Hace que suavice la velocidad en los giros (como un péndulo)
       });
+
+      this.createAnimation();
+      this.play(this.idleAnim, true)
     }
 
     takeDamage(damage) {
@@ -47,5 +50,19 @@ export default class FlyingEnemy extends Phaser.Physics.Arcade.Sprite {
             },
           });
         }
+    }
+
+    createAnimation(){
+
+      this.idleAnim = {};
+      this.idleAnim.key = "enemy2_idle";
+      this.idleAnim.frames = this.scene.anims.generateFrameNames('spr_enemy2', {
+        prefix: 'enemy2_idle',
+        start: 1,
+        end: 2,
+      });
+      this.idleAnim.frameRate = 8;
+      this.idleAnim.repeat = -1;
+      this.scene.anims.create(this.idleAnim);
     }
 }

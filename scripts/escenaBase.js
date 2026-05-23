@@ -40,12 +40,14 @@ export default class EscenaBase extends Phaser.Scene {
 
     this.loadAudio(); //cargar todos los sonidos
 
-    // Cargar atlas para el jugador (nueva línea añadida)
+    // cargar atlas para el jugador
     this.load.atlas(
       "spr_character",
       "assets/spr_character.png",
       "assets/spr_character_atlas.json",
     );
+
+    this.load.atlas("spr_enemy2", "assets/spr_enemy2.png", "assets/spr_enemy2_atlas.json");
   }
 
   create() {
@@ -342,7 +344,7 @@ export default class EscenaBase extends Phaser.Scene {
       immovable: true, // que sean inmoviles
     });
 
-    // const flyingLayer = this.map.objects.find(layer => layer.name === 'flying_enemies');
+    // const flyingLayer = this.map.objects.find(layer => layer.name === 'enemies_flying');
     // if (flyingLayer && flyingLayer.objects) {
     //     flyingLayer.objects.forEach(obj => {
     //         const obstacle = new FlyingEnemy(this, obj.x, obj.y);
