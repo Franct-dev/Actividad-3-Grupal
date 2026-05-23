@@ -43,11 +43,23 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
     this.createAnimations();
 
+
+    // particulas de disparo
+    this.shootParticles = this.scene.add.particles(0, 0, 'bullet', {
+        speed: { min: 100, max: 200 },
+        scale: { start: 0.4, end: 0 },
+        lifespan: 150,
+        quantity: 5,
+        emitting: false // para que no disparen automaticmente
+    });
   }
 
   update() {
 
-    if(this.inKnockback === true) return;
+    if(this.inKnockback === true) {
+      this.play('char_hit', true);
+      return;
+    }
 
     //velocidad y fuerza de salto
     const speed = 200;        
@@ -145,7 +157,12 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     bullet.setCollideWorldBounds(true);
     bullet.body.onWorldBounds = true;
 
+    this.play('char_shoot', true);
     this.scene.shootSound.play();
+
+    if (this.shootParticles) {
+        this.shootParticles.explode(5, this.x, this.y + 10); //para que salgan mas o menos donde el arma, se bajan un poco
+    }
 
   }
 
@@ -157,7 +174,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     this.walkAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
         prefix: 'char_walk',
         start: 1,
-        end: 2,
+        end: 6,
       });
     this.walkAnim.frameRate = 10;
     this.walkAnim.repeat = -1;
@@ -186,6 +203,31 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
     this.jumpAnim.frameRate = 10;
     this.jumpAnim.repeat = -1;
     this.scene.anims.create(this.jumpAnim);
+
+    //DISPARO
+
+    // this.shootAnim = {}
+    // this.shootAnim.key = "char_shoot";
+    // this.shootAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+    //   prefix:'char_shot',
+    //   start:1,
+    //   end:6,
+    // })
+    // this.shootAnim.frameRate = 10;
+    // this.shootAnim.repeat = -1;
+    // this.scene.anims.create(this.shootAnim);
+
+    //Recibir daño
+    this.hitAnim = {}
+    this.hitAnim.key = "char_hit";
+    this.hitAnim.frames = this.scene.anims.generateFrameNames('spr_character', {
+      prefix:'char_hit',
+      start:1,
+      end:5,
+    })
+    this.hitAnim.frameRate = 10;
+    this.hitAnim.repeat = 0;
+    this.scene.anims.create(this.hitAnim);
   }
 
   takeDamage(enemyXPosition){

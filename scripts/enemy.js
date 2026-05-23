@@ -10,6 +10,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         // Variables propias del enemigo (ej. vida, dirección)
         this.health = 1;
+
+        this.createAnimation();
+        this.play(this.idleAnim, true)
     }
 
     // Este método se ejecuta automáticamente si el grupo lo actualiza
@@ -37,5 +40,19 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
             },
           });
         }
+    }
+
+  createAnimation() {
+
+      this.idleAnim = {};
+      this.idleAnim.key = "enemy_idle";
+      this.idleAnim.frames = this.scene.anims.generateFrameNames('spr_enemy', {
+        prefix: 'enemy_idle',
+        start: 1,
+        end: 2,
+      });
+      this.idleAnim.frameRate = 8;
+      this.idleAnim.repeat = -1;
+      this.scene.anims.create(this.idleAnim);
     }
 }

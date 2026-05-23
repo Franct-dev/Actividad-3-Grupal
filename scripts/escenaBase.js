@@ -29,9 +29,9 @@ export default class EscenaBase extends Phaser.Scene {
     this.load.image("key", "assets/key.png"); // imagen de la llave
     this.load.image("spike", "assets/spikes.png"); // imagen de los pinchos
     this.load.image("bullet", "assets/bullet.png"); //Sprite de la bala
-    this.load.image("enemy", "assets/enemy.png"); //Sprite del enemigo
-    this.load.image("enemy_flying", "assets/enemy2.png"); //Sprite del enemigo volador
-    this.load.image("enemy_patrol", "assets/enemy3.png"); //Sprite del enemigo que se mueve horizontalmente
+    this.load.image("enemy", "assets/enemy_idle1.png"); //Sprite del enemigo
+    this.load.image("enemy_flying", "assets/enemy2_idle1.png"); //Sprite del enemigo volador
+    this.load.image("enemy_patrol", "assets/enemy_idle1.png"); //Sprite del enemigo que se mueve horizontalmente
 
     //OBJETOS RECOGIBLES
     this.load.image("life", "assets/life.png");
@@ -47,6 +47,8 @@ export default class EscenaBase extends Phaser.Scene {
       "assets/spr_character_atlas.json",
     );
 
+    //cargar atlas de los enemigos
+    this.load.atlas("spr_enemy", "assets/spr_enemy.png", "assets/spr_enemy_atlas.json");
     this.load.atlas("spr_enemy2", "assets/spr_enemy2.png", "assets/spr_enemy2_atlas.json");
   }
 

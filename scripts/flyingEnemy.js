@@ -59,7 +59,7 @@ export default class FlyingEnemy extends Phaser.Physics.Arcade.Sprite {
       this.idleAnim.frames = this.scene.anims.generateFrameNames('spr_enemy2', {
         prefix: 'enemy2_idle',
         start: 1,
-        end: 2,
+        end: 5,
       });
       this.idleAnim.frameRate = 8;
       this.idleAnim.repeat = -1;

@@ -25,6 +25,45 @@
                 "x": 0.5,
                 "y": 0.5
             }
+        },
+        {
+            "filename": "enemy2_idle3",
+            "frame": {
+                "w": 71,
+                "h": 45,
+                "x": 71,
+                "y": 0
+            },
+            "anchor": {
+                "x": 0.5,
+                "y": 0.5
+            }
+        },
+        {
+            "filename": "enemy2_idle4",
+            "frame": {
+                "w": 71,
+                "h": 45,
+                "x": 71,
+                "y": 45
+            },
+            "anchor": {
+                "x": 0.5,
+                "y": 0.5
+            }
+        },
+        {
+            "filename": "enemy2_idle5",
+            "frame": {
+                "w": 71,
+                "h": 45,
+                "x": 0,
+                "y": 90
+            },
+            "anchor": {
+                "x": 0.5,
+                "y": 0.5
+            }
         }
     ],
     "meta": {
