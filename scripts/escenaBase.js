@@ -35,7 +35,7 @@ export default class EscenaBase extends Phaser.Scene {
 
     //OBJETOS RECOGIBLES
     this.load.image("life", "assets/life.png");
-    this.load.image("powerUp", "assets/bullet.png");
+    this.load.image("powerUp", "assets/power_up.png");
     this.load.image("coin", "assets/coin.png");
 
     this.loadAudio(); //cargar todos los sonidos
@@ -433,7 +433,6 @@ export default class EscenaBase extends Phaser.Scene {
     if (powerUpLayer && powerUpLayer.objects) {
       powerUpLayer.objects.forEach((obj) => {
         const powerUp = this.shootSpeed.create(obj.x, obj.y, 'powerUp');
-        powerUp.setTint(0xF54927);   
         powerUp.refreshBody();    
       });
     }

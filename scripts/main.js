@@ -7,7 +7,7 @@ const config = {
     type: Phaser.AUTO,
     width: 64*25, //para solo cambiar el numero de patrones configurado en Tiled
     height: 64*14,
-    backgroundColor: '#243c8d',
+    backgroundColor: '#3a3c55',
     physics: {
         default: 'arcade',
         arcade: {

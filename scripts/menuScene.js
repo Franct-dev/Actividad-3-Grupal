@@ -10,7 +10,7 @@ export default class MenuScene extends Phaser.Scene {
 
     create() {
         // añadir un fondo o un texto de título enorme
-        this.add.text(800, 300, 'SUPER JUEGOAZO', {
+        this.add.text(800, 300, 'SUPER JUEGAZO', {
             fontSize: '64px',
             fill: '#ffffff',
             fontFamily: 'monospace'

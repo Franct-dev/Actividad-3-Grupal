@@ -1,12 +1,4 @@
 { "compressionlevel":-1,
- "editorsettings":
-    {
-     "export":
-        {
-         "format":"json",
-         "target":"tilemap_level2.tmj"
-        }
-    },
  "height":14,
  "infinite":false,
  "layers":[
