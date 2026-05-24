@@ -154,8 +154,16 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
         bullet.setVelocityX(400);
     }
 
-    bullet.setCollideWorldBounds(true);
-    bullet.body.onWorldBounds = true;
+    // bullet.setCollideWorldBounds(true);
+    // bullet.body.onWorldBounds = true;
+
+    //destruir la bala tras un tiempo por si no chocara contra nada que no se vaya volando por ahi para siempre
+    this.scene.time.delayedCall(3000, () => {
+        
+        if (bullet && bullet.active) {
+            bullet.destroy();
+        }
+    });
 
     this.play('char_shoot', true);
     this.scene.shootSound.play();
