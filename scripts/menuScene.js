@@ -29,7 +29,7 @@ export default class MenuScene extends Phaser.Scene {
 
         // cuando se hace click en el boton, se pasa a la escena base
         playBtn.on('pointerdown', () => {
-            this.scene.start('EscenaBase');
+            this.scene.start('EscenaBase', {level:1});
         });
     }
 }

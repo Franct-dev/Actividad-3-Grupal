@@ -23,7 +23,7 @@ export default class EscenaBase extends Phaser.Scene {
     //cargar el tilemap del nivel actual
     if (this.currentLevel === 1) {
       this.load.tilemapTiledJSON("map1", "assets/tilemap_64.json");
-    } else this.load.tilemapTiledJSON("map2", "assets/tilemap_64.json");
+    } else this.load.tilemapTiledJSON("map2", "assets/tilemap_level2.json");
 
     this.load.image("player", "assets/char_idle1.png"); // Imagen del jugador
     this.load.image("key", "assets/key.png"); // imagen de la llave
@@ -58,7 +58,7 @@ export default class EscenaBase extends Phaser.Scene {
     this.createAudio();
     this.createPlayer();
     this.createSceneObjects();
-    this.setupTimer();
+    // this.setupTimer();
     this.createEndGameScreen();
     this.setupSceneObjectsCollisions();
     this.createEnemies();
@@ -68,10 +68,12 @@ export default class EscenaBase extends Phaser.Scene {
   }
 
   update() {
-    //actualizar temporizador
-    if (this.totalTime > 0) {
-      this.player.update();
-    }
+
+    // if (this.totalTime > 0) {
+    //   this.player.update();
+    // }
+
+    this.player.update();
   }
 
   // FUNCIONES
@@ -136,10 +138,11 @@ export default class EscenaBase extends Phaser.Scene {
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
 
-    // hacer que la camara principal siga al jugador
-    this.cameras.main.startFollow(this.player);
+    this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
     // añadir limites a la camara para que no se vea el fondo al llegar a los bordes
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+    // hacer que la camara principal siga al jugador
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
   }
 
   createSceneObjects() {
@@ -158,12 +161,23 @@ export default class EscenaBase extends Phaser.Scene {
 
     //inicializar que el jugador no ha recogido la llave todavia
     this.hasKey = false;
-    //crear la llave en su posición y marcarla como inmóvil y que no utilice gravedad
-    this.key = this.physics.add.sprite(1500, 192, "key");
-    this.key.setImmovable(true);
-    this.key.body.setAllowGravity(false);
-    //configurar el overlap para que la llave detecte al jugador
-    this.physics.add.overlap(this.player, this.key, this.pickupKey, null, this);
+    
+    const keyLayer = this.map.objects.find((layer) => layer.name === "key");
+
+    if (keyLayer && keyLayer.objects && keyLayer.objects.length > 0) {
+
+      const keyData = keyLayer.objects[0];
+      this.key = this.physics.add.staticSprite(keyData.x, keyData.y, 'key');
+      this.key.refreshBody();
+      this.physics.add.overlap(this.player, this.key, this.pickupKey, null, this);
+    }
+    else {
+      this.key = this.physics.add.sprite(1500, 192, "key");
+      this.key.setImmovable(true);
+      this.key.body.setAllowGravity(false);
+      this.physics.add.overlap(this.player, this.key, this.pickupKey, null, this);
+    }
+    
 
     //PINCHOS
 
@@ -214,18 +228,22 @@ export default class EscenaBase extends Phaser.Scene {
 
   createEndGameScreen() {
 
+    const centerX = this.cameras.main.width / 2;
+    const centerY = this.cameras.main.height / 2;
+
     this.txtEndGame = this.add
-      .text(800, 400, "", {
+      .text(centerX, centerY - 50, "", {
         fontSize: "64px",
         fill: "#fff",
         fontFamily: "Calibri",
         fontWeight: "bold",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setScrollFactor(0);
 
     // BOTON DE REINICIAR
     this.restartBtn = this.add
-      .text(800, 500, "REINICIAR", {
+      .text(centerX, centerY + 50, "REINICIAR", {
         fontSize: "30px",
         fill: "#fff",
         backgroundColor: "#000",
@@ -234,7 +252,8 @@ export default class EscenaBase extends Phaser.Scene {
       })
       .setInteractive()
       .setVisible(false)
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setScrollFactor(0);
 
     // añadir al boton que se reinicie el juego cuando se le haga clic
     this.restartBtn.on("pointerdown", () => {
@@ -247,7 +266,7 @@ export default class EscenaBase extends Phaser.Scene {
 
     // BOTON DE SIGUIENTE NIVEL
     this.nextLevelBtn = this.add
-      .text(800, 500, "SIGUIENTE NIVEL", {
+      .text(centerX, centerY + 50, "SIGUIENTE NIVEL", {
         fontSize: "30px",
         fill: "#fff",
         backgroundColor: "#000",
@@ -256,7 +275,8 @@ export default class EscenaBase extends Phaser.Scene {
       })
       .setInteractive()
       .setVisible(false)
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setScrollFactor(0);
 
     // añadir al boton que se reinicie el juego cuando se le haga clic
     this.nextLevelBtn.on("pointerdown", () => {
@@ -346,17 +366,13 @@ export default class EscenaBase extends Phaser.Scene {
       immovable: true, // que sean inmoviles
     });
 
-    // const flyingLayer = this.map.objects.find(layer => layer.name === 'enemies_flying');
-    // if (flyingLayer && flyingLayer.objects) {
-    //     flyingLayer.objects.forEach(obj => {
-    //         const obstacle = new FlyingEnemy(this, obj.x, obj.y);
-    //         this.flyingEnemies.add(obstacle);
-    //     });
-    // }
-
-    const flyingEnemy = new FlyingEnemy(this, 200, 300);
-
-    this.flyingEnemies.add(flyingEnemy);
+    const flyingLayer = this.map.objects.find(layer => layer.name === 'flying_enemies');
+    if (flyingLayer && flyingLayer.objects) {
+        flyingLayer.objects.forEach(obj => {
+            const flyingEnemy = new FlyingEnemy(this, obj.x, obj.y);
+            this.flyingEnemies.add(flyingEnemy);
+        });
+    }
 
     // configurar colisiones
     this.physics.add.overlap(
@@ -380,9 +396,9 @@ export default class EscenaBase extends Phaser.Scene {
     //DISPARO
 
     // Cuando cualquier objeto con onWorldBounds llegue al borde del mundo, se destruye
-    this.physics.world.on("worldbounds", (body) => {
-      body.gameObject.destroy();
-    });
+    // this.physics.world.on("worldbounds", (body) => {
+    //   body.gameObject.destroy();
+    // });
 
     // configurar colisiones de la bala
     this.physics.add.collider(
@@ -412,8 +428,15 @@ export default class EscenaBase extends Phaser.Scene {
 
     this.shootSpeed = this.physics.add.staticGroup();
 
-    const powerUp = this.shootSpeed.create(600, 250, 'powerUp');
-    powerUp.setTint(0xF54927);
+    const powerUpLayer = this.map.objects.find((layer) => layer.name === "powerUp");
+    
+    if (powerUpLayer && powerUpLayer.objects) {
+      powerUpLayer.objects.forEach((obj) => {
+        const powerUp = this.shootSpeed.create(obj.x, obj.y, 'powerUp');
+        powerUp.setTint(0xF54927);   
+        powerUp.refreshBody();    
+      });
+    }
 
     this.physics.add.overlap(this.player, this.shootSpeed, (player, item) => {
 
@@ -425,7 +448,15 @@ export default class EscenaBase extends Phaser.Scene {
     //CURACION
 
     this.healItems = this.physics.add.staticGroup();
-    const healItem = this.healItems.create(700, 250, 'life');
+    
+    const lifesLayer = this.map.objects.find((layer) => layer.name === "lifes");
+    
+    if (lifesLayer && lifesLayer.objects) {
+      lifesLayer.objects.forEach((obj) => {
+        const healItem = this.healItems.create(obj.x, obj.y, 'life');
+        healItem.refreshBody();    
+      });
+    }
 
     this.physics.add.overlap(this.player, this.healItems, (player, item) => {
 
@@ -444,13 +475,18 @@ export default class EscenaBase extends Phaser.Scene {
 
     this.coins = this.physics.add.staticGroup();
 
-    this.coins.create(400, 200, 'coin'); 
-    this.coins.create(700, 200, 'coin');
+    const coinsLayer = this.map.objects.find((layer) => layer.name === "coins");
 
+    if (coinsLayer && coinsLayer.objects) {
+      coinsLayer.objects.forEach((obj) => {
+        const coin = this.coins.create(obj.x, obj.y, 'coin');
+        coin.refreshBody();
+      });
+    }
     this.physics.add.overlap(this.player, this.coins, (player, coin) => {
-      coin.destroy();    
-      this.addScore(200);  
-      this.pickupSound.play(); 
+      coin.destroy();
+      this.addScore(200);
+      this.pickupSound.play();
     });
   }
 
@@ -461,7 +497,7 @@ export default class EscenaBase extends Phaser.Scene {
   // parar el juego cuando se gana / pierde
   endGame() {
     this.physics.pause(); // Detener físicas
-    this.timer.remove(); // Detener el temporizador para que no siga restando tiempo
+    // this.timer.remove(); // Detener el temporizador para que no siga restando tiempo
   }
 
   //para cuando se recoge la llave y desbloquea la puerta
@@ -496,11 +532,11 @@ export default class EscenaBase extends Phaser.Scene {
     //muestra un mensaje u otro segun si es el primer o el segundo nivel
     if (this.currentLevel !== 2) {
       this.txtEndGame.setText("¡NIVEL SUPERADO!");
-      this.nextLevelBtn.setVisible(true);
     }
     else {
-      this.txtEndGame.setText("¡JUEGO COMPLETADO!");
+      this.txtEndGame.setText("¡JUEGO COMPLETADO!");   
     }
+    this.nextLevelBtn.setVisible(true);
     this.txtEndGame.setColor("#1eff00");
     this.victorySound.play();
     this.endGame();
@@ -513,7 +549,7 @@ export default class EscenaBase extends Phaser.Scene {
     }
     //si ya esta en el nivel 2, se acaba la partida
     else {
-
+        this.scene.start('MenuScene'); //vuelve a la pantalla de titulo
     }
   }
 
