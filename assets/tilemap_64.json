@@ -29,6 +29,28 @@
         }, 
         {
          "draworder":"topdown",
+         "id":14,
+         "name":"powerUp",
+         "objects":[
+                {
+                 "height":44.9861495844875,
+                 "id":31,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":68.2548476454293,
+                 "x":797.340720221607,
+                 "y":389.362880886427
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":10,
          "name":"flying_enemies",
          "objects":[
@@ -65,7 +87,7 @@
         {
          "draworder":"topdown",
          "id":12,
-         "name":"coin",
+         "name":"coins",
          "objects":[
                 {
                  "ellipse":true,
@@ -112,7 +134,7 @@
         {
          "draworder":"topdown",
          "id":11,
-         "name":"life",
+         "name":"lifes",
          "objects":[
                 {
                  "ellipse":true,
@@ -367,8 +389,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":14,
- "nextobjectid":31,
+ "nextlayerid":15,
+ "nextobjectid":32,
  "orientation":"orthogonal",
  "renderorder":"left-down",
  "tiledversion":"1.11.2",
