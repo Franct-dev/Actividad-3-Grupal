@@ -138,10 +138,7 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
 
   shoot(){
 
-    //bloquear el disparo
     this.canShoot = false;
-
-    //cooldown del disparo
     this.scene.time.delayedCall(this.shootCooldown, () => {
         this.canShoot = true;
     });
@@ -154,9 +151,6 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
         bullet.setVelocityX(400);
     }
 
-    // bullet.setCollideWorldBounds(true);
-    // bullet.body.onWorldBounds = true;
-
     //destruir la bala tras un tiempo por si no chocara contra nada que no se vaya volando por ahi para siempre
     this.scene.time.delayedCall(3000, () => {
         
@@ -164,14 +158,12 @@ export default class Jugador extends Phaser.Physics.Arcade.Sprite {
             bullet.destroy();
         }
     });
-
+    
     this.play('char_shoot', true);
     this.scene.shootSound.play();
-
     if (this.shootParticles) {
         this.shootParticles.explode(5, this.x, this.y + 10); //para que salgan mas o menos donde el arma, se bajan un poco
     }
-
   }
 
   createAnimations(){
